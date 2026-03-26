@@ -1,0 +1,57 @@
+# ============================================================================
+# CONFIGURAÇÕES DA APLICAÇÃO SPRING BOOT
+# Este arquivo YAML configura todos os aspectos da aplicação
+# ============================================================================
+
+spring:
+  # Configurações gerais da aplicação Spring
+  application:
+    # Nome da aplicação (aparece em logs e é usada internamente pelo Spring)
+    name: spring-boot-stud
+  
+  # Configurações do banco de dados (DataSource)
+  datasource:
+    # URL de conexão com o banco H2 (em memória, não persiste dados após reinicialização)
+    # jdbc:h2:mem:testdb -> cria um banco em memória chamado 'testdb'
+    url: jdbc:h2:mem:testdb
+    # Driver JDBC que a aplicação usará para conectar ao banco de dados
+    driverClassName: org.h2.Driver
+    # Usuário para conexão com o banco (vazio para H2 em memória)
+    username:
+    # Senha para conexão com o banco (vazio para H2 em memória)
+    password:
+  
+  # Configurações do JPA (Java Persistence API) e Hibernate
+  jpa:
+    # Dialeto SQL específico do banco de dados
+    # H2Dialect otimiza o SQL para o banco de dados H2
+    database-platform: org.hibernate.dialect.H2Dialect
+    
+    # Configurações do Hibernate (implementação do JPA)
+    hibernate:
+      # Estratégia de criação/atualização do schema do banco de dados
+      # 'update' significa: cria tabelas se não existirem e atualiza esquema conforme necessário
+      ddl-auto: update
+  
+  # Configurações do console H2 (ferramenta web para visualizar o banco em memória)
+  h2:
+    console:
+      # Habilita o console H2 para ser acessado via navegador
+      enabled: true
+      # Caminho para acessar o console (http://localhost:8081/h2-console)
+      path: /h2-console
+
+# Configurações do servidor Tomcat (servidor web embutido no Spring Boot)
+server:
+  # Porta onde a aplicação será executada
+  # A API estará disponível em http://localhost:8081
+  port: 8081
+
+# Configurações de logging (exibição de mensagens na console)
+logging:
+  level:
+    org:
+      # Define o nível de log para o pacote do Spring como DEBUG
+      # DEBUG mostra muitas mensagens de configuração (útil para entender o que está acontecendo)
+      # Níveis: TRACE > DEBUG > INFO > WARN > ERROR
+      springframework: DEBUG
