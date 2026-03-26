@@ -3,6 +3,7 @@ package br.com.silva.spring_boot_stud.service;
 // Importações necessárias para esta service
 import br.com.silva.spring_boot_stud.database.model.ProdutoEntity;  // Entidade que representa um Produto
 import br.com.silva.spring_boot_stud.dto.ProdutoDto;               // DTO para transferência de dados
+import br.com.silva.spring_boot_stud.exception.NotFoundException;
 import org.springframework.stereotype.Service;                       // Anotação que marca como componente de negócio
 
 // Importações para manipulação de dados numéricos e coleções
@@ -112,7 +113,7 @@ public class ProdutoService {
      * @return A ProdutoEntity atualizada
      * @throws RuntimeException se o produto não for encontrado
      */
-    public ProdutoEntity atualizaProdutos(ProdutoDto produtoDto, Integer id) {
+    public ProdutoEntity atualizaProdutos(ProdutoDto produtoDto, Integer id) throws NotFoundException {
         /**
          * Busca o produto existente:
          * 1. PRODUTOS.stream() converte a lista em stream
@@ -123,7 +124,7 @@ public class ProdutoService {
         ProdutoEntity produtoExistente = PRODUTOS.stream()
                 .filter(produto -> produto.getId().equals(id))  // Comparação do ID com equals (mais seguro que ==)
                 .findFirst()                                     // Encontra o primeiro resultado
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));  // Lança erro se não encontrar
+                .orElseThrow(() -> new NotFoundException ("Produto não encontrado"));  // Lança erro se não encontrar
 
         // Atualiza o nome do produto com o valor do DTO
         produtoExistente.setName(produtoDto.getName());

@@ -3,6 +3,7 @@ package br.com.silva.spring_boot_stud.controller;
 // Importações necessárias para o Controller
 import br.com.silva.spring_boot_stud.database.model.ProdutoEntity;  // Entidade de Produto
 import br.com.silva.spring_boot_stud.dto.ProdutoDto;               // DTO para transferência de dados
+import br.com.silva.spring_boot_stud.exception.NotFoundException;
 import br.com.silva.spring_boot_stud.service.ProdutoService;       // Service com lógica de negócio
 import lombok.RequiredArgsConstructor;                             // Gera construtor com dependências Lombok
 
@@ -94,7 +95,7 @@ public class ProdutoController {
         // @PathVariable Integer id: Extrai o valor de {id} da URL e converte para Integer
         @PathVariable Integer id,
         // @RequestBody: JSON do corpo da requisição é desserializado para ProdutoDto
-        @RequestBody ProdutoDto produtoDto) {
+        @RequestBody ProdutoDto produtoDto) throws NotFoundException {
         // Chama o método atualizaProdutos() da Service passando o DTO e o ID
         return produtoService.atualizaProdutos(produtoDto, id);
     }
