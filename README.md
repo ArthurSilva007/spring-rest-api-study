@@ -32,6 +32,7 @@
 8. [Como Testar](#como-testar)
 9. [Conceitos Importantes](#conceitos-importantes)
 10. [Boas Práticas](#boas-práticas)
+11. [Tratamento Global de Erros](#tratamento-global-de-erros)
 
 ---
 
@@ -42,6 +43,7 @@
 Este é um **projeto de aprendizado** de Spring Boot que implementa uma **API REST completa** para gerenciar produtos com:
 
 - ✅ **4 endpoints REST** funcionais (CRUD)
+- ✅ **Tratamento global de exceções** com payload padronizado
 - ✅ **Código 100% comentado** linha por linha
 - ✅ **7 documentos** com explicações detalhadas
 - ✅ **Padrões profissionais** (MVC, DTO, Service Layer)
@@ -55,6 +57,7 @@ Este é um **projeto de aprendizado** de Spring Boot que implementa uma **API RE
 | Criar novo | POST | /v1/produtos | 201 |
 | Atualizar | PUT | /v1/produtos/{id} | 201 |
 | Deletar | DELETE | /v1/produtos/{id} | 204 |
+| Produto não encontrado | PUT | /v1/produtos/{id} | 404 |
 
 ### Stack Tecnológico
 ```text
@@ -128,6 +131,16 @@ spring-boot-stud/
 │   │   │       │   └── model/
 │   │   │       │       └── ProdutoEntity.java
 │   │   │       │           └─ Entidade JPA que representa um Produto
+│   │   │       │
+│   │   │       ├── exception/
+│   │   │       │   ├── NotFoundException.java
+│   │   │       │   │   └─ Exceção customizada para recurso não encontrado
+│   │   │       │   └── ErrorResponse.java
+│   │   │       │       └─ DTO padrão de resposta de erro (message, status)
+│   │   │       │
+│   │   │       ├── handler/
+│   │   │       │   └── GlobalExceptionHandler.java
+│   │   │       │       └─ Handler global para mapear exceções em respostas HTTP
 │   │   │       │
 │   │   │       └── dto/
 │   │   │           └── ProdutoDto.java
@@ -363,6 +376,17 @@ Content-Type: application/json
   "name": "Notebook Gamer",
   "quantidade": 5,
   "preco": 3500
+}
+```
+
+**Possível erro (produto não encontrado):**
+
+**Status HTTP**: 404 (NOT FOUND)
+
+```json
+{
+  "message": "Produto não encontrado",
+  "status": 404
 }
 ```
 
@@ -698,17 +722,34 @@ public ProdutoEntity create(@RequestBody ProdutoDto dto) {
 
 ### 4. Tratamento de Erros
 
-Crie uma classe ExceptionHandler:
+No estado atual do projeto, o fluxo de erro está assim:
 ```java
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntime(RuntimeException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-            .body(new ErrorResponse(e.getMessage()));
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFoundException(NotFoundException ex) {
+        ErrorResponse response = ErrorResponse.builder()
+            .message(ex.getMessage())
+            .status(HttpStatus.NOT_FOUND.value())
+            .build();
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+        ErrorResponse response = ErrorResponse.builder()
+            .message(ex.getMessage())
+            .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+            .build();
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }
 ```
+
+No `ProdutoService`, quando o produto não existe, é lançada `NotFoundException`.
+O `GlobalExceptionHandler` captura e retorna um JSON padrão com `message` e `status`.
 
 ### 5. Validação de Dados
 
@@ -831,6 +872,51 @@ public List<ProdutoEntity> findAll() {
     List<ProdutoEntity> produtos = repository.findAll();
     logger.debug("Total de produtos: {}", produtos.size());
     return produtos;
+}
+```
+
+---
+
+## 🚨 Tratamento Global de Erros
+
+### Classes adicionadas
+
+- `src/main/java/br/com/silva/spring_boot_stud/exception/NotFoundException.java`
+- `src/main/java/br/com/silva/spring_boot_stud/exception/ErrorResponse.java`
+- `src/main/java/br/com/silva/spring_boot_stud/handler/GlobalExceptionHandler.java`
+
+### Contrato padrão de erro
+
+```json
+{
+  "message": "Mensagem de erro",
+  "status": 404
+}
+```
+
+### Exemplo prático (ID inexistente)
+
+```http
+PUT /v1/produtos/999
+Content-Type: application/json
+
+{
+  "name": "Produto teste",
+  "quantidade": 1,
+  "preco": 100
+}
+```
+
+Resposta esperada:
+
+```http
+HTTP/1.1 404 Not Found
+```
+
+```json
+{
+  "message": "Produto não encontrado",
+  "status": 404
 }
 ```
 
